@@ -7,11 +7,26 @@ from wagtail.core.models import Page
 
 
 class HomePage(Page):
-    pass
-
-
-class BlogPage(Page):
     body = StreamField([
+        ("h2", blocks.StructBlock([
+            ("title", blocks.CharBlock()),
+        ])),
+        ("h2p", blocks.StructBlock([
+            ("title", blocks.CharBlock()),
+            ("text", blocks.CharBlock())
+        ]))
+    ])
+
+    content_panels = [
+        FieldPanel("title"),
+        StreamFieldPanel("body"),
+    ]
+
+    parent_page_types = [Page]
+
+
+class CategoryPage(Page):
+    category_body = StreamField([
         ("h2", blocks.StructBlock([
             ("title", blocks.CharBlock()),
         ])),
@@ -24,19 +39,29 @@ class BlogPage(Page):
 
     content_panels = [
         FieldPanel("title"),
-        StreamFieldPanel("body"),
+        StreamFieldPanel("category_body"),
         ImageChooserPanel("image")
     ]
 
+    parent_page_types = [HomePage]
 
-class NewBlogPage(Page):
-    color1 = models.CharField(max_length=7, null=True, blank=True)
-    color2 = models.CharField(max_length=7, null=True, blank=True)
-    color3 = models.CharField(max_length=7, null=True, blank=True)
+
+class BlogPage(Page):
+    blog_body = StreamField([
+        ("h2", blocks.StructBlock([
+            ("title", blocks.CharBlock()),
+        ])),
+        ("h2p", blocks.StructBlock([
+            ("title", blocks.CharBlock()),
+            ("text", blocks.CharBlock())
+        ]))
+    ])
+    image = models.ForeignKey('wagtailimages.Image', on_delete=models.SET_NULL, null=True, related_name='+')
 
     content_panels = [
         FieldPanel("title"),
-        FieldPanel("color1"),
-        FieldPanel("color2"),
-        FieldPanel("color3"),
+        StreamFieldPanel("blog_body"),
+        ImageChooserPanel("image")
     ]
+
+    parent_page_types = [HomePage, CategoryPage]

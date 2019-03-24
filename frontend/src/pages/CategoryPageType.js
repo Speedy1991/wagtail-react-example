@@ -2,7 +2,9 @@ import React from "react";
 import { useQuery } from "react-apollo-hooks";
 import gql from "graphql-tag";
 import { Link } from "@reach/router";
+
 import { PAGE_FRAGMENT } from "../apollo/fragments";
+import * as blocks from "../blocks";
 
 const CHILD_PAGES = gql`
   query Page($urlPath: String!, $specific: Boolean) {
@@ -18,7 +20,18 @@ const CHILD_PAGES = gql`
   ${PAGE_FRAGMENT}
 `;
 
-export default function HomePageType({ id: pk, title, urlPath }) {
+function BlockLoader({ __typename, ...rest }) {
+  const Block = blocks[__typename];
+  return <Block {...rest} />;
+}
+
+export default function CategoryPageType({
+  title,
+  body,
+  image,
+  urlPath,
+  ...rest
+}) {
   const {
     data: { page },
     loading,
@@ -36,7 +49,9 @@ export default function HomePageType({ id: pk, title, urlPath }) {
   return (
     <>
       <h1>{title}</h1>
-      <h2>HOME PAGE</h2>
+      {body.map(block => (
+        <BlockLoader {...block} />
+      ))}
       <h3>Childs</h3>
       <ul>
         {page.children.map(page => {
@@ -49,6 +64,7 @@ export default function HomePageType({ id: pk, title, urlPath }) {
       </ul>
       <h3>Parent</h3>
       <Link to={page.parent.urlPath}>{page.parent.title}</Link>
+      <h4>Page related stuff</h4>
     </>
   );
 }

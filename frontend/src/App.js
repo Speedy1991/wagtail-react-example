@@ -3,24 +3,65 @@ import { Router } from "@reach/router";
 import { useQuery } from "react-apollo-hooks";
 import gql from "graphql-tag";
 import * as pages from "./pages";
+import {
+  H2BLOCK_FRAGMENT,
+  H2PBLOCK_FRAGMENT,
+  PAGE_FRAGMENT,
+  IMAGE_FRAGMENT,
+  RENDITION_FRAGMENT
+} from "./apollo/fragments";
 
 import "./App.css";
 
 const PAGE_QUERY = gql`
-  query Page($slug: String!, $specific: Boolean) {
-    page: pageBySlug(slug: $slug, specific: $specific) {
-      id
-      title
-      slug
-      seoTitle
-      searchDescription
-      ... on NewBlogPageType {
-        color1
-        color2
-        color3
+  query Page(
+    $urlPath: String!
+    $specific: Boolean
+    $jpegquality: Int
+    $format: String
+    $fill: String
+  ) {
+    page: pageByUrlPath(urlPath: $urlPath, specific: $specific) {
+      ...PageFragment
+      ... on BlogPageType {
+        body: blogBody {
+          ... on H2BlockType {
+            ...H2BlockFragment
+          }
+          ... on H2PBlockType {
+            ...H2PBlockFragment
+          }
+        }
+        image {
+          ...ImageFragment
+          rendition(fill: $fill, jpegquality: $jpegquality, format: $format) {
+            ...RenditionFragment
+          }
+        }
+      }
+      ... on CategoryPageType {
+        body: categoryBody {
+          ... on H2BlockType {
+            ...H2BlockFragment
+          }
+          ... on H2PBlockType {
+            ...H2PBlockFragment
+          }
+        }
+        image {
+          ...ImageFragment
+          rendition(fill: $fill, jpegquality: $jpegquality, format: $format) {
+            ...RenditionFragment
+          }
+        }
       }
     }
   }
+  ${H2BLOCK_FRAGMENT}
+  ${H2PBLOCK_FRAGMENT}
+  ${PAGE_FRAGMENT}
+  ${IMAGE_FRAGMENT}
+  ${RENDITION_FRAGMENT}
 `;
 
 function Page404() {
@@ -32,12 +73,18 @@ function Page404() {
 }
 
 function PageLoader(props) {
-  const { slug } = props;
+  const {
+    location: { pathname }
+  } = props;
+  const urlPath = pathname.endsWith("/") ? pathname : pathname + "/";
+
   const {
     data: { page },
     loading,
     error
-  } = useQuery(PAGE_QUERY, { variables: { slug, specific: true } });
+  } = useQuery(PAGE_QUERY, {
+    variables: { urlPath, specific: true, format: "jpeg" }
+  });
 
   if (error) {
     throw error;
@@ -49,7 +96,7 @@ function PageLoader(props) {
 
   try {
     const Page = pages[page.__typename];
-    return <Page {...props} {...page} />;
+    return <Page {...props} {...page} urlPath={urlPath} />;
   } catch (err) {
     return <Page404 />;
   }
@@ -58,7 +105,7 @@ function PageLoader(props) {
 function App(props) {
   return (
     <Router>
-      <PageLoader path="/:slug" />
+      <PageLoader path="/*" />
     </Router>
   );
 }

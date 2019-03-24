@@ -25,8 +25,8 @@ class H2PBlockType(DefaultStreamBlock):
 
 
 class BlogPageType(DjangoObjectType):
-    (body, resolve_body) = create_stream_field_type(
-        'body',
+    (blog_body, resolve_blog_body) = create_stream_field_type(
+        'blog_body',
         h2=H2BlockType,
         h2p=H2PBlockType
     )
@@ -44,15 +44,23 @@ class HomePageType(DjangoObjectType):
         interfaces = [PageInterface, ]
 
 
-class NewBlogPageType(DjangoObjectType):
+class CategoryPageType(DjangoObjectType):
+    (category_body, resolve_category_body) = create_stream_field_type(
+        'category_body',
+        h2=H2BlockType,
+        h2p=H2PBlockType
+    )
+
+    image = graphene.Field(ImageType)
+
     class Meta:
-        model = models.NewBlogPage
+        model = models.CategoryPage
         interfaces = [PageInterface, ]
 
 
 class SearchResults(graphene.Union):
     class Meta:
-        types = [NewBlogPageType, BlogPageType]
+        types = [CategoryPageType, BlogPageType]
 
 
-export_types = [BlogPageType, NewBlogPageType, HomePageType, H2PBlockType, H2BlockType]
+export_types = [BlogPageType, CategoryPageType, HomePageType, H2PBlockType, H2BlockType]

@@ -100,6 +100,7 @@ class PageInterface(graphene.Interface):
     slug = graphene.String()
     seo_title = graphene.String()
     search_description = graphene.String()
+    url_path = graphene.String()
     children = graphene.List(
         lambda: PageInterface,
         specific=graphene.Boolean(default_value=False)
