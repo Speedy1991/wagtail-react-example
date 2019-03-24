@@ -1,14 +1,14 @@
 import React from "react";
 import { useQuery } from "react-apollo-hooks";
 import gql from "graphql-tag";
-import { Link } from "@reach/router";
+import styled from "styled-components";
 
 import { PAGE_FRAGMENT } from "../apollo/fragments";
 import * as blocks from "../blocks";
 
 const CHILD_PAGES = gql`
-  query Page($urlPath: String!, $specific: Boolean) {
-    page: pageByUrlPath(urlPath: $urlPath, specific: $specific) {
+  query Page($path: String!, $specific: Boolean) {
+    page: pageByPath(path: $path, specific: $specific) {
       children {
         ...PageFragment
       }
@@ -20,23 +20,46 @@ const CHILD_PAGES = gql`
   ${PAGE_FRAGMENT}
 `;
 
+const ImageWrapper = styled.div`
+  background-image: url(${props => props.url});
+  background-size: cover;
+  background-position: center;
+  min-height: 300px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const H1 = styled.h1`
+  text-align: center;
+  color: white;
+`;
+
+const H3 = styled.h3`
+  text-align: center;
+`;
+
 function BlockLoader({ __typename, ...rest }) {
   const Block = blocks[__typename];
   return <Block {...rest} />;
 }
 
-export default function CategoryPageType({
-  title,
-  body,
-  image,
-  urlPath,
-  ...rest
-}) {
+export default function CategoryPageType({ title, body, image, location }) {
+  const { pathname, href } = location;
   const {
     data: { page },
     loading,
     error
-  } = useQuery(CHILD_PAGES, { variables: { urlPath } });
+  } = useQuery(CHILD_PAGES, { variables: { path: pathname } });
 
   if (error) {
     throw error;
@@ -46,25 +69,31 @@ export default function CategoryPageType({
     return "Loading";
   }
 
+  const parentPath = href
+    .split("/")
+    .slice(-1, 1)
+    .join("/");
+
   return (
-    <>
-      <h1>{title}</h1>
+    <Wrapper>
+      <ImageWrapper url={"http://127.0.0.1:8000" + image.rendition.url}>
+        <H1>{title}</H1>
+      </ImageWrapper>
       {body.map(block => (
         <BlockLoader {...block} />
       ))}
-      <h3>Childs</h3>
+      <H3>Childs</H3>
       <ul>
         {page.children.map(page => {
           return (
             <li key={page.id}>
-              <Link to={page.urlPath}>{page.title}</Link>
+              <a href={`${page.slug}/`}>{page.title}</a>
             </li>
           );
         })}
       </ul>
-      <h3>Parent</h3>
-      <Link to={page.parent.urlPath}>{page.parent.title}</Link>
-      <h4>Page related stuff</h4>
-    </>
+      <H3>Parent</H3>
+      <a href={`/${parentPath}`}>{page.parent.title}</a>
+    </Wrapper>
   );
 }

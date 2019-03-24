@@ -6,11 +6,25 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import client from "./apollo/client";
+import { createGlobalStyle } from "styled-components";
+
+const GlobalStyle = createGlobalStyle`
+  * {
+    box-sizing: border-box;
+  }
+  body, html, h1, h2, h3, ul, ol {
+    margin: 0;
+    padding: 0;
+  }
+`;
 
 ReactDOM.render(
-  <ApolloHooksProvider client={client}>
-    <App />
-  </ApolloHooksProvider>,
+  <>
+    <GlobalStyle />
+    <ApolloHooksProvider client={client}>
+      <App />
+    </ApolloHooksProvider>
+  </>,
   document.getElementById("root")
 );
 

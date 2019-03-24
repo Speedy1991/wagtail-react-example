@@ -23,7 +23,6 @@ export const PAGE_FRAGMENT = gql`
     slug
     seoTitle
     searchDescription
-    urlPath
   }
 `;
 

@@ -1,43 +1,41 @@
 import graphene
 from . import types
 from wagtail.core.models import Page
+from django.http.response import Http404
 
-# TODO filter queries with SITE
+
+def _get_page(request, path, specific=False):
+    if not request.site:
+        return None
+
+    try:
+        path_components = [component for component in path.split('/') if component]
+        page, args, kwargs = request.site.root_page.route(request, path_components)
+        if specific:
+            page = page.specific
+        return page
+    except Http404:
+        return None
 
 
 class Query(graphene.ObjectType):
     pages = graphene.List(types.PageInterface, specific=graphene.Boolean(default_value=False))
-    page = graphene.Field(types.PageInterface, specific=graphene.Boolean(default_value=False), pk=graphene.ID())
-    page_by_slug = graphene.Field(types.PageInterface, specific=graphene.Boolean(default_value=False), slug=graphene.String())
-    page_by_url_path = graphene.Field(types.PageInterface, specific=graphene.Boolean(default_value=False), url_path=graphene.String())
-    search = graphene.List(types.PageInterface, specific=graphene.Boolean(default_value=False))
+    page_by_id = graphene.Field(types.PageInterface, specific=graphene.Boolean(default_value=False), pk=graphene.ID())
+    page_by_path = graphene.Field(types.PageInterface, specific=graphene.Boolean(default_value=False), path=graphene.String())
+    search = graphene.List(types.PageInterface, specific=graphene.Boolean(default_value=False), query=graphene.String())
+    menu = graphene.List(types.PageInterface)
 
-    def resolve_page_by_url_path(self, info, specific, url_path, **kwargs):
-        qs = Page.objects.live().public().filter(url_path=url_path)
-        if specific:
-            qs = qs.specific()
-        return qs.first()
+    def resolve_page_by_path(self, info, specific, path, **kwargs):
+        return _get_page(info.context, path, specific)
 
-    def resolve_page_by_slug(self, info, specific, slug, **kwargs):
-        qs = Page.objects.live().public().filter(slug=slug)
-        if specific:
-            qs = qs.specific()
-        return qs.first()
-
-    def resolve_pages(self, info, specific, **kwargs):
-        qs = Page.objects.live().public().exclude(title="Root")
-        if specific:
-            qs = qs.specific()
-        return qs.all()
-
-    def resolve_page(self, info, pk, specific, **kwargs):
+    def resolve_page_by_id(self, info, pk, specific, **kwargs):
         qs = Page.objects.live().public().filter(pk=pk)
         if specific:
             qs = qs.specific()
         return qs.first()
 
     def resolve_search(self, info, query, specific, **kwargs):
-        qs = Page.objects.live().public()
-        if specific:
-            qs = qs.specific()
-        return qs.search(query)
+        return info.context.site.root_page.get_descendants(inclusive=True).search(query)
+
+    def resolve_menu(self, info, **kwargs):
+        return Page.objects.live().public().filter(show_in_menus=True)

@@ -1,24 +1,31 @@
 import React from "react";
-import { useQuery } from "react-apollo-hooks";
-import gql from "graphql-tag";
-import { Link } from "@reach/router";
 import * as blocks from "../blocks";
+import styled from "styled-components";
 
-import { PAGE_FRAGMENT } from "../apollo/fragments";
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const H1 = styled.h1`
+  text-align: center;
+  color: red;
+`;
 
 function BlockLoader({ __typename, ...rest }) {
   const Block = blocks[__typename];
   return <Block {...rest} />;
 }
 
-export default function BlogPageType({ title, body, image, urlPath, ...rest }) {
-  console.log(body);
+export default function BlogPageType({ title, body, image }) {
   return (
-    <div>
-      <h1>{title}</h1>
+    <Wrapper>
+      <H1>{title}</H1>
       {body.map(block => (
         <BlockLoader {...block} />
       ))}
-    </div>
+    </Wrapper>
   );
 }

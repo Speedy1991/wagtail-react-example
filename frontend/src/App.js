@@ -14,14 +14,8 @@ import {
 import "./App.css";
 
 const PAGE_QUERY = gql`
-  query Page(
-    $urlPath: String!
-    $specific: Boolean
-    $jpegquality: Int
-    $format: String
-    $fill: String
-  ) {
-    page: pageByUrlPath(urlPath: $urlPath, specific: $specific) {
+  query Page($path: String!, $specific: Boolean) {
+    page: pageByPath(path: $path, specific: $specific) {
       ...PageFragment
       ... on BlogPageType {
         body: blogBody {
@@ -34,7 +28,7 @@ const PAGE_QUERY = gql`
         }
         image {
           ...ImageFragment
-          rendition(fill: $fill, jpegquality: $jpegquality, format: $format) {
+          rendition(fill: "400x200", jpegquality: 80, format: "jpeg") {
             ...RenditionFragment
           }
         }
@@ -50,7 +44,7 @@ const PAGE_QUERY = gql`
         }
         image {
           ...ImageFragment
-          rendition(fill: $fill, jpegquality: $jpegquality, format: $format) {
+          rendition(fill: "1920x300", jpegquality: 80, format: "jpeg") {
             ...RenditionFragment
           }
         }
@@ -73,17 +67,16 @@ function Page404() {
 }
 
 function PageLoader(props) {
+  console.log("LOCATION", props.location);
   const {
     location: { pathname }
   } = props;
-  const urlPath = pathname.endsWith("/") ? pathname : pathname + "/";
-
   const {
     data: { page },
     loading,
     error
   } = useQuery(PAGE_QUERY, {
-    variables: { urlPath, specific: true, format: "jpeg" }
+    variables: { path: pathname, specific: true, format: "jpeg" }
   });
 
   if (error) {
@@ -96,7 +89,7 @@ function PageLoader(props) {
 
   try {
     const Page = pages[page.__typename];
-    return <Page {...props} {...page} urlPath={urlPath} />;
+    return <Page {...props} {...page} />;
   } catch (err) {
     return <Page404 />;
   }
@@ -105,7 +98,7 @@ function PageLoader(props) {
 function App(props) {
   return (
     <Router>
-      <PageLoader path="/*" />
+      <PageLoader path="*" />
     </Router>
   );
 }
